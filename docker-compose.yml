@@ -1,0 +1,9 @@
+# Sobe apenas o Redis, na porta padrão 6379.
+# Uso: docker compose up -d   (para desligar: docker compose down)
+services:
+  redis:
+    image: redis
+    container_name: redis-demo
+    ports:
+      - "6379:6379"
+    restart: unless-stopped

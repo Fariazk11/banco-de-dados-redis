@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Com Redis — Redis Demo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="cabecalho">
+      <a class="logo" href="index.html">Redis <span>Demo</span></a>
+      <span id="status-redis" class="status"><span class="bolinha"></span>verificando Redis...</span>
+      <nav>
+        <a href="index.html">Início</a>
+        <a href="analise.html">Tarefa pesada</a>
+        <a href="sem-redis.html">Sem Redis</a>
+        <a href="com-redis.html" class="ativo">Com Redis</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h1>⚡ Consulta com cache no Redis</h1>
+    <p class="subtitulo">
+      O servidor procura primeiro no Redis. Se não achar (<b>MISS</b>), consulta o banco
+      e guarda o resultado por 60 segundos. Nas próximas vezes (<b>HIT</b>), responde direto da memória.
+    </p>
+
+    <div class="grade">
+      <section class="cartao">
+        <h2>Consultar relatório</h2>
+        <div class="acoes">
+          <button id="botao-consultar" class="redis">Consultar</button>
+          <button id="botao-limpar" class="secundario">Limpar cache</button>
+        </div>
+        <p class="tempo redis" id="tempo">— <small>ms</small></p>
+        <p><span id="selo"></span></p>
+
+        <!-- Mensagens de erro (Redis desligado) e de informação -->
+        <div id="erro" class="mensagem erro oculto"></div>
+        <div id="info" class="mensagem info oculto"></div>
+      </section>
+
+      <section class="cartao">
+        <h2>Histórico das últimas consultas</h2>
+        <ul class="historico" id="historico">
+          <li class="vazio">Nenhuma consulta ainda.</li>
+        </ul>
+      </section>
+    </div>
+
+    <div class="grade-tabelas">
+      <section class="cartao">
+        <h2>Vendas por produto</h2>
+        <div class="tabela-container">
+          <table id="tabela-produtos">
+            <thead>
+              <tr>
+                <th>Produto</th><th>Categoria</th>
+                <th class="numero">Qtd.</th><th class="numero">Total</th><th class="numero">Ticket médio</th>
+              </tr>
+            </thead>
+            <tbody><tr><td colspan="5" class="vazio">Clique em "Consultar".</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="cartao">
+        <h2>Vendas por categoria</h2>
+        <div class="tabela-container">
+          <table id="tabela-categorias">
+            <thead>
+              <tr><th>Categoria</th><th class="numero">Qtd.</th><th class="numero">Total</th></tr>
+            </thead>
+            <tbody><tr><td colspan="3" class="vazio">Clique em "Consultar".</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>Apresentação: Redis como cache • Node.js + Express + SQLite</footer>
+
+  <script src="comum.js"></script>
+  <script>
+    const botao = document.getElementById('botao-consultar');
+    const botaoLimpar = document.getElementById('botao-limpar');
+    const tempoEl = document.getElementById('tempo');
+    const seloEl = document.getElementById('selo');
+    const erroEl = document.getElementById('erro');
+    const infoEl = document.getElementById('info');
+    const historicoEl = document.getElementById('historico');
+
+    // Mostra (ou esconde) uma caixa de mensagem
+    function mostrarMensagem(el, texto) {
+      el.textContent = texto || '';
+      el.classList.toggle('oculto', !texto);
+    }
+
+    // Botão "Consultar"
+    botao.addEventListener('click', async () => {
+      botao.disabled = true;
+      botao.textContent = 'Consultando...';
+      mostrarMensagem(erroEl, '');
+      mostrarMensagem(infoEl, '');
+
+      try {
+        const resposta = await fetch('/api/com-redis');
+        const json = await resposta.json();
+
+        // Redis desligado: o servidor responde com status 503 e uma mensagem
+        if (!resposta.ok) {
+          mostrarMensagem(erroEl, '🔌 ' + json.erro);
+          tempoEl.innerHTML = '— <small>ms</small>';
+          seloEl.innerHTML = '';
+          return;
+        }
+
+        const ehHit = json.origem === 'cache';
+        const seloHtml = ehHit
+          ? '<span class="selo hit">HIT (cache)</span>'
+          : '<span class="selo miss">MISS (banco)</span>';
+
+        tempoEl.innerHTML = `${json.tempoMs.toLocaleString('pt-BR')} <small>ms</small>`;
+        seloEl.innerHTML = seloHtml.replace('class="selo', 'class="selo grande');
+        mostrarRelatorio(json.dados);
+        adicionarAoHistorico(
+          historicoEl,
+          `<span class="hora">${horaAtual()} ${seloHtml}</span><strong>${formatarTempo(json.tempoMs)}</strong>`
+        );
+      } catch (erro) {
+        mostrarMensagem(erroEl, 'Não foi possível falar com o servidor. Ele está rodando (npm start)?');
+      } finally {
+        botao.disabled = false;
+        botao.textContent = 'Consultar';
+      }
+    });
+
+    // Botão "Limpar cache" → apaga a chave no Redis para forçar um MISS
+    botaoLimpar.addEventListener('click', async () => {
+      mostrarMensagem(erroEl, '');
+      try {
+        const resposta = await fetch('/api/cache', { method: 'DELETE' });
+        const json = await resposta.json();
+        if (!resposta.ok) return mostrarMensagem(erroEl, '🔌 ' + json.erro);
+        mostrarMensagem(infoEl, '🧹 ' + json.mensagem + ' A próxima consulta será um MISS.');
+        seloEl.innerHTML = '';
+      } catch {
+        mostrarMensagem(erroEl, 'Não foi possível falar com o servidor.');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sem Redis — Redis Demo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="cabecalho">
+      <a class="logo" href="index.html">Redis <span>Demo</span></a>
+      <span id="status-redis" class="status"><span class="bolinha"></span>verificando Redis...</span>
+      <nav>
+        <a href="index.html">Início</a>
+        <a href="analise.html">Tarefa pesada</a>
+        <a href="sem-redis.html" class="ativo">Sem Redis</a>
+        <a href="com-redis.html">Com Redis</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h1>🗄️ Consulta direto no banco</h1>
+    <p class="subtitulo">
+      Toda vez que você clicar, o servidor executa o relatório no SQLite,
+      lendo os 300 mil pedidos da tabela.
+    </p>
+
+    <div class="grade">
+      <section class="cartao">
+        <h2>Consultar relatório</h2>
+        <div class="acoes">
+          <button id="botao-consultar">Consultar</button>
+        </div>
+        <p class="tempo banco" id="tempo">— <small>ms</small></p>
+        <p class="status">Tempo medido no servidor (origem: banco)</p>
+      </section>
+
+      <section class="cartao">
+        <h2>Histórico das últimas consultas</h2>
+        <ul class="historico" id="historico">
+          <li class="vazio">Nenhuma consulta ainda.</li>
+        </ul>
+      </section>
+    </div>
+
+    <div class="grade-tabelas">
+      <section class="cartao">
+        <h2>Vendas por produto</h2>
+        <div class="tabela-container">
+          <table id="tabela-produtos">
+            <thead>
+              <tr>
+                <th>Produto</th><th>Categoria</th>
+                <th class="numero">Qtd.</th><th class="numero">Total</th><th class="numero">Ticket médio</th>
+              </tr>
+            </thead>
+            <tbody><tr><td colspan="5" class="vazio">Clique em "Consultar".</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="cartao">
+        <h2>Vendas por categoria</h2>
+        <div class="tabela-container">
+          <table id="tabela-categorias">
+            <thead>
+              <tr><th>Categoria</th><th class="numero">Qtd.</th><th class="numero">Total</th></tr>
+            </thead>
+            <tbody><tr><td colspan="3" class="vazio">Clique em "Consultar".</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>Apresentação: Redis como cache • Node.js + Express + SQLite</footer>
+
+  <script src="comum.js"></script>
+  <script>
+    const botao = document.getElementById('botao-consultar');
+    const tempoEl = document.getElementById('tempo');
+    const historicoEl = document.getElementById('historico');
+
+    botao.addEventListener('click', async () => {
+      botao.disabled = true;
+      botao.textContent = 'Consultando...';
+
+      try {
+        // Chama a rota que vai SEMPRE no banco
+        const resposta = await fetch('/api/sem-redis');
+        const json = await resposta.json();
+
+        tempoEl.innerHTML = `${json.tempoMs.toLocaleString('pt-BR')} <small>ms</small>`;
+        mostrarRelatorio(json.dados);
+        adicionarAoHistorico(
+          historicoEl,
+          `<span class="hora">${horaAtual()} • banco</span><strong>${formatarTempo(json.tempoMs)}</strong>`
+        );
+      } catch (erro) {
+        tempoEl.innerHTML = 'Erro <small>servidor fora do ar?</small>';
+      } finally {
+        botao.disabled = false;
+        botao.textContent = 'Consultar';
+      }
+    });
+  </script>
+</body>
+</html>

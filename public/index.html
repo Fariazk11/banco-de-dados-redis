@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redis Demo — Comparação</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="cabecalho">
+      <a class="logo" href="index.html">Redis <span>Demo</span></a>
+      <span id="status-redis" class="status"><span class="bolinha"></span>verificando Redis...</span>
+      <nav>
+        <a href="index.html" class="ativo">Início</a>
+        <a href="analise.html">Tarefa pesada</a>
+        <a href="sem-redis.html">Sem Redis</a>
+        <a href="com-redis.html">Com Redis</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h1>Redis vs. Banco de Dados</h1>
+    <p class="subtitulo">
+      Relatório de vendas de uma lanchonete com 300 mil pedidos.
+      Qual é mais rápido: perguntar sempre ao banco ou guardar a resposta no Redis?
+    </p>
+
+    <!-- Destaque: a tarefa pesada -->
+    <a class="cartao link-cartao destaque-tarefa" href="analise.html">
+      <h2>🏋️ Tarefa pesada: análise anual completa (~2 minutos no banco)</h2>
+      <p>
+        Veja o banco executando milhares de consultas ao vivo, numa corrida contra o Redis.
+        O mesmo relatório que leva minutos no banco volta do cache em milissegundos.
+      </p>
+    </a>
+
+    <!-- Links para as duas páginas -->
+    <div class="grade">
+      <a class="cartao link-cartao" href="sem-redis.html">
+        <h2>🗄️ Sem Redis</h2>
+        <p>Cada consulta vai direto ao SQLite e lê a tabela inteira.</p>
+      </a>
+      <a class="cartao link-cartao redis" href="com-redis.html">
+        <h2>⚡ Com Redis</h2>
+        <p>A primeira consulta vai ao banco (MISS); as próximas vêm do cache (HIT).</p>
+      </a>
+    </div>
+
+    <!-- Comparação lado a lado -->
+    <section class="cartao">
+      <h2>Comparação lado a lado</h2>
+      <div class="acoes">
+        <button id="botao-rodar" class="redis">Rodar 10 vezes</button>
+        <span class="progresso" id="progresso">Chama cada rota 10 vezes e calcula o tempo médio.</span>
+      </div>
+      <div id="erro" class="mensagem erro oculto"></div>
+
+      <div class="grade" style="margin-top: 20px;">
+        <div>
+          <div class="status">Média sem Redis (banco)</div>
+          <p class="tempo banco" id="media-banco">— <small>ms</small></p>
+        </div>
+        <div>
+          <div class="status">Média com Redis</div>
+          <p class="tempo redis" id="media-redis">— <small>ms</small></p>
+          <div class="status" id="contagem-hit"></div>
+        </div>
+      </div>
+
+      <p class="destaque" id="destaque"></p>
+      <p class="destaque-sub" id="destaque-hits"></p>
+
+      <!-- Gráfico de barras feito só com HTML e CSS -->
+      <div class="grafico">
+        <div class="linha-barra">
+          <div class="rotulo-barra"><span>Sem Redis</span><span id="rotulo-banco"></span></div>
+          <div class="trilho"><div class="barra banco" id="barra-banco"></div></div>
+        </div>
+        <div class="linha-barra">
+          <div class="rotulo-barra"><span>Com Redis</span><span id="rotulo-redis"></span></div>
+          <div class="trilho"><div class="barra redis" id="barra-redis"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Histórico de cada chamada -->
+    <section class="cartao">
+      <h2>Histórico das últimas consultas</h2>
+      <div class="tabela-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Rodada</th>
+              <th class="numero">Sem Redis</th>
+              <th class="numero">Com Redis</th>
+              <th>Origem (com Redis)</th>
+            </tr>
+          </thead>
+          <tbody id="historico">
+            <tr><td colspan="4" class="vazio">Clique em "Rodar 10 vezes".</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>Apresentação: Redis como cache • Node.js + Express + SQLite</footer>
+
+  <script src="comum.js"></script>
+  <script>
+    const RODADAS = 10;
+
+    const botao = document.getElementById('botao-rodar');
+    const progressoEl = document.getElementById('progresso');
+    const erroEl = document.getElementById('erro');
+    const historicoEl = document.getElementById('historico');
+
+    // Faz uma chamada à API e devolve o JSON (ou lança erro com a mensagem do servidor)
+    async function chamar(url) {
+      const resposta = await fetch(url);
+      const json = await resposta.json();
+      if (!resposta.ok) throw new Error(json.erro || 'Erro no servidor');
+      return json;
+    }
+
+    // Calcula a média de uma lista de números
+    const media = (lista) => lista.reduce((soma, n) => soma + n, 0) / lista.length;
+
+    botao.addEventListener('click', async () => {
+      botao.disabled = true;
+      erroEl.classList.add('oculto');
+      historicoEl.innerHTML = '';
+
+      const temposBanco = [];
+      const temposRedis = [];
+      const temposHits = []; // só as consultas que vieram do cache
+
+      try {
+        for (let i = 1; i <= RODADAS; i++) {
+          progressoEl.textContent = `Rodada ${i} de ${RODADAS}...`;
+
+          // Uma chamada para cada rota, na mesma rodada
+          const semRedis = await chamar('/api/sem-redis');
+          const comRedis = await chamar('/api/com-redis');
+
+          temposBanco.push(semRedis.tempoMs);
+          temposRedis.push(comRedis.tempoMs);
+          if (comRedis.origem === 'cache') temposHits.push(comRedis.tempoMs);
+
+          const selo = comRedis.origem === 'cache'
+            ? '<span class="selo hit">HIT (cache)</span>'
+            : '<span class="selo miss">MISS (banco)</span>';
+
+          historicoEl.insertAdjacentHTML('beforeend', `
+            <tr>
+              <td>${i}ª</td>
+              <td class="numero">${formatarTempo(semRedis.tempoMs)}</td>
+              <td class="numero">${formatarTempo(comRedis.tempoMs)}</td>
+              <td>${selo}</td>
+            </tr>`);
+        }
+
+        mostrarResultado(media(temposBanco), media(temposRedis), temposHits);
+        progressoEl.textContent = `Concluído às ${horaAtual()}.`;
+      } catch (erro) {
+        erroEl.textContent = '🔌 ' + erro.message;
+        erroEl.classList.remove('oculto');
+        progressoEl.textContent = 'A comparação foi interrompida.';
+      } finally {
+        botao.disabled = false;
+      }
+    });
+
+    // Mostra as médias, quantas vezes mais rápido e desenha o gráfico de barras
+    function mostrarResultado(mediaBanco, mediaRedis, temposHits) {
+      const hits = temposHits.length;
+      const misses = RODADAS - hits;
+      const formatarVezes = (n) => n.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + 'x';
+
+      document.getElementById('media-banco').innerHTML = formatarTempo(mediaBanco).replace(' ms', ' <small>ms</small>');
+      document.getElementById('media-redis').innerHTML = formatarTempo(mediaRedis).replace(' ms', ' <small>ms</small>');
+      document.getElementById('contagem-hit').textContent =
+        `${hits} ${hits === 1 ? 'HIT' : 'HITs'} e ${misses} ${misses === 1 ? 'MISS' : 'MISSes'}`;
+
+      document.getElementById('destaque').innerHTML =
+        `Com Redis foi <strong>${formatarVezes(mediaBanco / mediaRedis)}</strong> mais rápido`;
+
+      // Se houve algum MISS, ele "puxa" a média para cima. Mostramos também
+      // a média só dos HITs, que é o tempo real de uma resposta do cache.
+      const hitsEl = document.getElementById('destaque-hits');
+      if (misses > 0 && hits > 0) {
+        const mediaHits = media(temposHits);
+        hitsEl.textContent =
+          `Considerando só os HITs (${formatarTempo(mediaHits)}), o cache foi ${formatarVezes(mediaBanco / mediaHits)} mais rápido. ` +
+          `A média inclui ${misses === 1 ? 'o MISS' : 'os MISSes'}, que ${misses === 1 ? 'foi' : 'foram'} ao banco.`;
+      } else {
+        hitsEl.textContent = '';
+      }
+
+      // A maior média ocupa 100% da largura; a outra é proporcional
+      const maior = Math.max(mediaBanco, mediaRedis);
+      document.getElementById('barra-banco').style.width = (mediaBanco / maior) * 100 + '%';
+      document.getElementById('barra-redis').style.width = (mediaRedis / maior) * 100 + '%';
+      document.getElementById('rotulo-banco').textContent = formatarTempo(mediaBanco);
+      document.getElementById('rotulo-redis').textContent = formatarTempo(mediaRedis);
+    }
+  </script>
+</body>
+</html>

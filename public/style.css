@@ -1,0 +1,552 @@
+/* =============================================================
+   style.css — Visual compartilhado pelas três páginas
+   ============================================================= */
+
+:root {
+  --fundo: #f4f6fa;
+  --cartao: #ffffff;
+  --texto: #1f2937;
+  --texto-suave: #6b7280;
+  --borda: #e5e7eb;
+  --banco: #2563eb;   /* azul = banco de dados */
+  --redis: #dc382d;   /* vermelho = Redis (cor da marca) */
+  --sucesso: #15803d;
+  --alerta: #b45309;
+  --raio: 12px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--fundo);
+  color: var(--texto);
+  line-height: 1.5;
+}
+
+/* ---------- Cabeçalho e navegação ---------- */
+header {
+  background: var(--cartao);
+  border-bottom: 1px solid var(--borda);
+}
+
+.cabecalho {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 14px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo { font-weight: 700; font-size: 1.15rem; text-decoration: none; color: var(--texto); }
+.logo span { color: var(--redis); }
+
+nav a {
+  margin-left: 16px;
+  color: var(--texto-suave);
+  text-decoration: none;
+  font-weight: 500;
+}
+nav a:hover, nav a.ativo { color: var(--texto); }
+
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+}
+
+h1 { margin: 0 0 4px; font-size: 1.7rem; }
+h2 { margin: 0 0 12px; font-size: 1.15rem; }
+.subtitulo { margin: 0 0 24px; color: var(--texto-suave); }
+
+/* ---------- Cartões e grade ---------- */
+.cartao {
+  background: var(--cartao);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+/* Dentro das grades, o espaçamento vem do "gap" (evita espaço dobrado no celular) */
+.grade, .grade-tabelas { margin-bottom: 20px; }
+.grade > .cartao, .grade-tabelas > .cartao { margin-bottom: 0; }
+
+/* Tabelas de resultado: a de produtos (5 colunas) ganha mais espaço */
+.grade-tabelas {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .grade-tabelas { grid-template-columns: 1fr; }
+}
+
+/* ---------- Botões ---------- */
+.acoes { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+button {
+  font: inherit;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  cursor: pointer;
+  color: #fff;
+  background: var(--banco);
+  transition: opacity .15s;
+}
+button:hover { opacity: .9; }
+button:disabled { opacity: .5; cursor: wait; }
+button.redis { background: var(--redis); }
+button.secundario { background: #fff; color: var(--texto); border: 1px solid var(--borda); }
+
+/* ---------- Tempo em destaque ---------- */
+.tempo {
+  font-size: 2.6rem;
+  font-weight: 700;
+  margin: 8px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+.tempo small { font-size: 1rem; color: var(--texto-suave); font-weight: 500; }
+.tempo.banco { color: var(--banco); }
+.tempo.redis { color: var(--redis); }
+
+/* ---------- Selos HIT / MISS ---------- */
+.selo {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: .8rem;
+  font-weight: 700;
+  color: #fff;
+}
+.selo.hit { background: var(--sucesso); }
+.selo.miss { background: var(--alerta); }
+.selo.grande { font-size: 1rem; padding: 6px 14px; }
+
+/* ---------- Mensagens ---------- */
+.mensagem {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-top: 14px;
+}
+.mensagem.erro { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+.mensagem.info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+.oculto { display: none; }
+
+/* ---------- Status do Redis ---------- */
+.status { font-size: .85rem; color: var(--texto-suave); }
+.status .bolinha {
+  display: inline-block;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  margin-right: 5px;
+  background: #9ca3af;
+}
+.status.ligado .bolinha { background: var(--sucesso); }
+.status.desligado .bolinha { background: var(--redis); }
+
+/* ---------- Tabelas ---------- */
+.tabela-container { overflow-x: auto; }
+
+table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--borda); }
+th { color: var(--texto-suave); font-weight: 600; font-size: .8rem; text-transform: uppercase; white-space: nowrap; }
+td.numero, th.numero { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ---------- Histórico ---------- */
+.historico { list-style: none; margin: 0; padding: 0; max-height: 320px; overflow-y: auto; }
+.historico li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px dashed var(--borda);
+  font-variant-numeric: tabular-nums;
+}
+.historico li:last-child { border-bottom: none; }
+.historico .hora { color: var(--texto-suave); font-size: .85rem; }
+.vazio { color: var(--texto-suave); font-style: italic; }
+
+/* ---------- Links da página inicial ---------- */
+.link-cartao {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-left: 5px solid var(--banco);
+  transition: transform .15s;
+}
+.link-cartao:hover { transform: translateY(-2px); }
+.link-cartao.redis { border-left-color: var(--redis); }
+.link-cartao p { margin: 0; color: var(--texto-suave); }
+
+/* ---------- Gráfico de barras (HTML/CSS puro) ---------- */
+.grafico { margin-top: 10px; }
+.linha-barra { margin-bottom: 14px; }
+.rotulo-barra { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 4px; }
+.trilho { background: #eef0f4; border-radius: 6px; height: 30px; overflow: hidden; }
+.barra {
+  height: 100%;
+  width: 0;
+  min-width: 4px; /* para a barra do Redis não "sumir" de tão pequena */
+  border-radius: 6px;
+  transition: width .8s ease;
+}
+.barra.banco { background: var(--banco); }
+.barra.redis { background: var(--redis); }
+
+.destaque {
+  text-align: center;
+  font-size: 1.3rem;
+  margin: 18px 0 4px;
+}
+.destaque strong { color: var(--redis); font-size: 2rem; }
+.destaque-sub { text-align: center; color: var(--texto-suave); margin: 0 0 8px; }
+
+.progresso { color: var(--texto-suave); }
+
+footer { text-align: center; color: var(--texto-suave); font-size: .85rem; padding-bottom: 24px; }
+
+@media (max-width: 600px) {
+  nav a { margin: 0 14px 0 0; }
+  .tempo { font-size: 2rem; }
+}
+
+/* =============================================================
+   Página "Tarefa pesada" (analise.html)
+   ============================================================= */
+
+.controles .acoes { justify-content: flex-start; }
+.dica { margin: 12px 0 0; color: var(--texto-suave); font-size: .92rem; }
+
+/* Chip com o estado do cache */
+.chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: .85rem;
+  font-weight: 600;
+  background: #f3f4f6;
+  color: var(--texto-suave);
+}
+.chip.cheio { background: #dcfce7; color: var(--sucesso); }
+.chip.vazio { background: #fef3c7; color: var(--alerta); }
+.chip.desligado { background: #fee2e2; color: #991b1b; }
+
+/* As duas pistas lado a lado */
+.pistas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+@media (max-width: 900px) { .pistas { grid-template-columns: 1fr; } }
+
+.pista { margin-bottom: 0; border-top: 5px solid var(--banco); min-width: 0; }
+.pista.redis { border-top-color: var(--redis); }
+.pista-topo { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.pista-topo h2 { margin: 0; }
+.descricao-pista { color: var(--texto-suave); margin: 6px 0 10px; font-size: .92rem; min-height: 3em; } /* mesma altura nas duas pistas */
+
+.cronometro {
+  font-size: 3rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  margin: 6px 0 10px;
+}
+.pista.banco .cronometro { color: var(--banco); }
+.pista.redis .cronometro { color: var(--redis); }
+.cronometro.rodando { opacity: .85; }
+
+/* Selo de estado da pista */
+.selo-estado {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: .85rem;
+  font-weight: 700;
+  background: #f3f4f6;
+  color: var(--texto-suave);
+}
+.selo-estado.trabalhando { background: #dbeafe; color: #1e40af; animation: pulsar 1.2s infinite; }
+.selo-estado.miss { background: #fef3c7; color: var(--alerta); }
+.selo-estado.hit { background: var(--sucesso); color: #fff; }
+.selo-estado.feito { background: #e5e7eb; color: var(--texto); }
+.selo-estado.erro { background: #fee2e2; color: #991b1b; }
+
+@keyframes pulsar { 50% { opacity: .55; } }
+
+.progresso-pista { margin: 14px 0 10px; }
+.trilho.fino { height: 12px; }
+.progresso-pista .barra { min-width: 0; }
+.texto-progresso { font-size: .82rem; color: var(--texto-suave); margin-top: 4px; font-variant-numeric: tabular-nums; }
+
+/* Contadores de consultas e linhas */
+.contadores { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.contadores div { background: var(--fundo); border-radius: 8px; padding: 8px 12px; }
+.contadores strong { display: block; font-size: 1.4rem; font-variant-numeric: tabular-nums; }
+.contadores span { font-size: .8rem; color: var(--texto-suave); }
+
+/* Lista de etapas */
+.etapas { list-style: none; padding: 0; margin: 0 0 12px; font-size: .88rem; }
+.etapa {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--borda);
+}
+.etapa .nome small { display: block; color: var(--texto-suave); font-size: .75rem; }
+.etapa .info { font-variant-numeric: tabular-nums; color: var(--texto-suave); white-space: nowrap; }
+.etapa .icone::before { content: '○'; color: #9ca3af; }
+.etapa.andando { font-weight: 600; }
+.etapa.andando .icone::before { content: '◐'; color: var(--banco); display: inline-block; animation: girar 1s linear infinite; }
+.etapa.feita .icone::before { content: '✔'; color: var(--sucesso); }
+.etapa.pulada { color: #9ca3af; text-decoration: line-through; }
+.etapa.pulada .icone::before { content: '⏭'; }
+.etapa.pulada .info { text-decoration: none; }
+
+@keyframes girar { to { transform: rotate(360deg); } }
+
+/* "Terminal" mostrando o que o banco está fazendo */
+.terminal {
+  background: #0f172a;
+  color: #cbd5e1;
+  font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
+  font-size: .76rem;
+  line-height: 1.45;
+  border-radius: 8px;
+  padding: 10px 12px;
+  height: 230px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.t-linha { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.t-cinza { color: #64748b; }
+.t-num { color: #64748b; }
+.t-res { color: #86efac; }
+.t-ms { color: #fbbf24; }
+.t-titulo { color: #fff; font-weight: 700; margin-top: 4px; }
+.t-sql { color: #7dd3fc; white-space: normal; }
+.t-amarelo { color: #fde68a; }
+.t-banco { color: #60a5fa; font-weight: 700; }
+.t-redis { color: #f87171; font-weight: 700; }
+.t-hit { color: #4ade80; font-weight: 700; white-space: normal; }
+.t-miss { color: #fbbf24; font-weight: 700; white-space: normal; }
+.t-ok { color: #4ade80; font-weight: 700; }
+.t-erro { color: #f87171; font-weight: 700; white-space: normal; }
+
+/* Resultado da análise */
+.titulo-secao { font-size: 1.3rem; margin: 10px 0 14px; }
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.kpi { margin-bottom: 0; padding: 14px 16px; }
+.kpi span { display: block; font-size: .8rem; color: var(--texto-suave); }
+.kpi strong { display: block; font-size: 1.15rem; }
+.kpi small { color: var(--texto-suave); }
+
+/* Gráfico de colunas (faturamento por mês) */
+.colunas {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 200px;
+  padding-top: 10px;
+}
+.coluna {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  min-width: 0;
+}
+.valor-coluna {
+  width: 100%;
+  background: linear-gradient(to top, var(--banco), #60a5fa);
+  border-radius: 4px 4px 0 0;
+  min-height: 4px;
+}
+.coluna span { font-size: .68rem; color: var(--texto-suave); margin-top: 4px; white-space: nowrap; }
+
+@media (max-width: 600px) {
+  .cronometro { font-size: 2.3rem; }
+  .coluna span { writing-mode: vertical-rl; transform: rotate(180deg); }
+}
+
+/* Cartão de destaque na página inicial */
+.destaque-tarefa {
+  border-left-color: var(--redis);
+  background: linear-gradient(135deg, #fff 60%, #fef2f2);
+}
+
+/* =============================================================
+   Comparação visual: corrida, contador e linha do tempo
+   ============================================================= */
+
+.corrida h2 { margin-bottom: 4px; }
+.legenda-corrida { color: var(--texto-suave); margin: 0 0 14px; min-height: 1.5em; }
+
+/* ---------- Pista de corrida ---------- */
+.raia {
+  display: grid;
+  grid-template-columns: 120px 1fr 180px;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.raia-nome { font-weight: 700; }
+.raia.banco .raia-nome { color: var(--banco); }
+.raia.redis .raia-nome { color: var(--redis); }
+
+.estrada {
+  position: relative;
+  height: 56px;
+  background: #374151;
+  border-radius: 10px;
+  overflow: hidden;
+}
+/* Faixa tracejada no meio da estrada */
+.estrada::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  border-top: 3px dashed rgba(255, 255, 255, .35);
+}
+/* Rastro colorido mostrando o caminho já percorrido */
+.rastro {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  transition: width .4s linear;
+}
+.raia.banco .rastro { background: rgba(37, 99, 235, .55); }
+.raia.redis .rastro { background: rgba(220, 56, 45, .6); }
+
+/* Área por onde o corredor anda (deixa espaço para a bandeira) */
+.trajeto { position: absolute; top: 0; bottom: 0; left: 6px; right: 58px; }
+.corredor {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  font-size: 2.1rem;
+  line-height: 1;
+  transition: left .4s linear;
+}
+.raia.banco .corredor { transform: translateY(-50%) scaleX(-1); } /* tartaruga olhando para a direita */
+.raia.redis .corredor { transform: translateY(-50%) rotate(45deg); } /* foguete apontando para a direita */
+.raia.redis .corredor { transition: left .6s cubic-bezier(.2, .8, .2, 1); }
+.raia.correndo.banco .corredor { animation: andar .5s ease-in-out infinite; }
+
+@keyframes andar {
+  0%, 100% { transform: translateY(-50%) scaleX(-1); }
+  50% { transform: translateY(-62%) scaleX(-1); }
+}
+
+.chegada {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.9rem;
+}
+.raia.chegou .estrada { box-shadow: 0 0 0 3px #fbbf24 inset; }
+
+.raia-fim { display: flex; align-items: center; gap: 6px; }
+.medalha { font-size: 1.8rem; }
+.raia-tempo { font-size: 1.25rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.raia.banco .raia-tempo { color: var(--banco); }
+.raia.redis .raia-tempo { color: var(--redis); }
+
+/* ---------- Contador gigante ---------- */
+.contador-vezes {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 18px 0 6px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fef2f2, #fff7ed);
+  border: 1px solid #fecaca;
+}
+.contador-numero {
+  font-size: 3.2rem;
+  font-weight: 900;
+  color: var(--redis);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+.contador-texto { color: var(--texto); font-size: 1rem; }
+
+/* ---------- Linha do tempo em escala real ---------- */
+.linha-tempo { margin-top: 20px; }
+.lt-titulo { font-weight: 700; margin-bottom: 8px; }
+.lt-linha {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.lt-nome { font-weight: 600; font-size: .9rem; color: var(--texto-suave); }
+.lt-trilho {
+  position: relative;
+  height: 26px;
+  --passo: 20%; /* largura de cada divisão da régua (definida pelo JS) */
+  background: repeating-linear-gradient(90deg, #f3f4f6 0 calc(var(--passo) - 1px), #e5e7eb calc(var(--passo) - 1px) var(--passo));
+  border-radius: 6px;
+}
+.lt-barra { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 6px; min-width: 2px; }
+.lt-barra.banco { background: var(--banco); }
+.lt-barra.redis { background: var(--redis); }
+.lt-rotulo {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 8px;
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--texto);
+  text-shadow: 0 0 3px #fff;
+  white-space: nowrap;
+}
+.lt-eixo { position: relative; height: 18px; font-size: .72rem; color: var(--texto-suave); }
+.lt-eixo span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.lt-eixo span:first-child { transform: none; }
+.lt-eixo span:last-child { transform: translateX(-100%); }
+
+@media (max-width: 700px) {
+  .raia { grid-template-columns: 1fr; gap: 6px; }
+  .lt-linha { grid-template-columns: 1fr; gap: 2px; }
+  .contador-vezes { flex-direction: column; text-align: center; }
+  .contador-numero { font-size: 2.6rem; }
+}
+
+.contador-vezes.oculto { display: none; }
+.lt-rotulo.dentro { transform: translate(-100%, -50%); color: #fff; text-shadow: none; }
+
+.raia-tempo { white-space: nowrap; }

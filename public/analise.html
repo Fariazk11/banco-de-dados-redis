@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tarefa pesada — Redis Demo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="cabecalho">
+      <a class="logo" href="index.html">Redis <span>Demo</span></a>
+      <span id="status-redis" class="status"><span class="bolinha"></span>verificando Redis...</span>
+      <nav>
+        <a href="index.html">Início</a>
+        <a href="analise.html" class="ativo">Tarefa pesada</a>
+        <a href="sem-redis.html">Sem Redis</a>
+        <a href="com-redis.html">Com Redis</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h1>🏋️ Tarefa pesada: análise anual completa</h1>
+    <p class="subtitulo">
+      Um relatório gerencial da lanchonete com <b>10 etapas</b> e <b>milhares de consultas SQL</b>.
+      Cada consulta percorre os <b>300 mil pedidos</b> da tabela. No banco, isso leva
+      <b>cerca de 2 minutos</b>. Com o Redis, o resultado pronto volta em milissegundos.
+    </p>
+
+    <!-- Controles gerais -->
+    <section class="cartao controles">
+      <div class="acoes">
+        <button id="botao-corrida" class="redis">🏁 Corrida: executar os dois ao mesmo tempo</button>
+        <button id="botao-limpar" class="secundario">🧹 Limpar cache</button>
+        <span id="estado-cache" class="chip">Cache: verificando...</span>
+      </div>
+      <p id="dica" class="dica"></p>
+      <div id="erro-geral" class="mensagem erro oculto"></div>
+    </section>
+
+    <!-- Comparação visual: corrida, linha do tempo e contador -->
+    <section class="cartao corrida">
+      <h2>🏁 Corrida ao vivo</h2>
+      <p class="legenda-corrida" id="legenda-corrida"></p>
+
+      <!-- Pista de corrida: cada corredor anda conforme o trabalho concluído -->
+      <div class="raia banco" id="raia-banco">
+        <div class="raia-nome">🗄️ Sem Redis</div>
+        <div class="estrada">
+          <div class="rastro"></div>
+          <div class="trajeto"><span class="corredor">🐢</span></div>
+          <span class="chegada">🏁</span>
+        </div>
+        <div class="raia-fim"><span class="medalha"></span><span class="raia-tempo">—</span></div>
+      </div>
+      <div class="raia redis" id="raia-redis">
+        <div class="raia-nome">⚡ Com Redis</div>
+        <div class="estrada">
+          <div class="rastro"></div>
+          <div class="trajeto"><span class="corredor">🚀</span></div>
+          <span class="chegada">🏁</span>
+        </div>
+        <div class="raia-fim"><span class="medalha"></span><span class="raia-tempo">—</span></div>
+      </div>
+
+      <!-- Contador: quantas vezes o Redis caberia no tempo do banco -->
+      <div class="contador-vezes oculto" id="contador-vezes">
+        <div class="contador-numero" id="contador-numero">0</div>
+        <div class="contador-texto" id="contador-texto"></div>
+      </div>
+
+      <!-- Linha do tempo em escala real -->
+      <div class="linha-tempo">
+        <div class="lt-titulo">⏱️ Tempo gasto, em escala real</div>
+        <div class="lt-linha">
+          <span class="lt-nome">Sem Redis</span>
+          <div class="lt-trilho"><div class="lt-barra banco" id="lt-barra-banco"></div><span class="lt-rotulo" id="lt-rotulo-banco"></span></div>
+        </div>
+        <div class="lt-linha">
+          <span class="lt-nome">Com Redis</span>
+          <div class="lt-trilho"><div class="lt-barra redis" id="lt-barra-redis"></div><span class="lt-rotulo" id="lt-rotulo-redis"></span></div>
+        </div>
+        <div class="lt-linha">
+          <span></span>
+          <div class="lt-eixo" id="lt-eixo"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- As duas "pistas" lado a lado -->
+    <div class="pistas">
+      <section class="cartao pista banco" id="pista-banco">
+        <div class="pista-topo">
+          <h2>🗄️ Sem Redis</h2>
+          <button class="botao-pista">▶ Executar</button>
+        </div>
+        <p class="descricao-pista">Toda vez, o servidor calcula a análise inteira no banco de dados.</p>
+        <div class="cronometro">00:00,00</div>
+        <div><span class="selo-estado">Aguardando</span></div>
+        <div class="progresso-pista">
+          <div class="trilho fino"><div class="barra banco"></div></div>
+          <div class="texto-progresso">—</div>
+        </div>
+        <div class="contadores">
+          <div><strong class="c-consultas">0</strong><span>consultas SQL</span></div>
+          <div><strong class="c-linhas">0</strong><span>linhas percorridas</span></div>
+        </div>
+        <ol class="etapas"><li class="vazio">As etapas aparecem quando a tarefa começar.</li></ol>
+        <div class="terminal"><div class="t-linha t-cinza">$ aguardando...</div></div>
+      </section>
+
+      <section class="cartao pista redis" id="pista-redis">
+        <div class="pista-topo">
+          <h2>⚡ Com Redis</h2>
+          <button class="botao-pista redis">▶ Executar</button>
+        </div>
+        <p class="descricao-pista">Procura o resultado pronto no Redis. Só vai ao banco se não encontrar (MISS).</p>
+        <div class="cronometro">00:00,00</div>
+        <div><span class="selo-estado">Aguardando</span></div>
+        <div class="progresso-pista">
+          <div class="trilho fino"><div class="barra redis"></div></div>
+          <div class="texto-progresso">—</div>
+        </div>
+        <div class="contadores">
+          <div><strong class="c-consultas">0</strong><span>consultas SQL</span></div>
+          <div><strong class="c-linhas">0</strong><span>linhas percorridas</span></div>
+        </div>
+        <ol class="etapas"><li class="vazio">As etapas aparecem quando a tarefa começar.</li></ol>
+        <div class="terminal"><div class="t-linha t-cinza">$ aguardando...</div></div>
+      </section>
+    </div>
+
+    <!-- Placar final -->
+    <section class="cartao oculto" id="placar">
+      <h2>🏆 Placar</h2>
+      <p class="destaque" id="placar-destaque"></p>
+      <div class="grafico">
+        <div class="linha-barra">
+          <div class="rotulo-barra"><span>Sem Redis</span><span id="placar-banco"></span></div>
+          <div class="trilho"><div class="barra banco" id="placar-barra-banco"></div></div>
+        </div>
+        <div class="linha-barra">
+          <div class="rotulo-barra"><span>Com Redis</span><span id="placar-redis"></span></div>
+          <div class="trilho"><div class="barra redis" id="placar-barra-redis"></div></div>
+        </div>
+      </div>
+      <p class="destaque-sub" id="placar-detalhe"></p>
+    </section>
+
+    <!-- Resultado da análise (igual nos dois lados) -->
+    <section class="oculto" id="resultado">
+      <h2 class="titulo-secao">📊 Resultado da análise</h2>
+      <div class="kpis" id="kpis"></div>
+      <div class="grade-tabelas">
+        <section class="cartao">
+          <h2>Faturamento por mês</h2>
+          <div class="colunas" id="grafico-meses"></div>
+        </section>
+        <section class="cartao">
+          <h2>Campeão do dia (em pedidos)</h2>
+          <p class="status">Quantos dias do ano cada produto foi o mais pedido.</p>
+          <div class="tabela-container"><table><tbody id="tabela-campeoes"></tbody></table></div>
+        </section>
+      </div>
+      <div class="grade">
+        <section class="cartao">
+          <h2>Produtos que mais faturaram</h2>
+          <div class="tabela-container"><table><tbody id="tabela-top"></tbody></table></div>
+        </section>
+        <section class="cartao">
+          <h2>Horários de pico</h2>
+          <div class="tabela-container"><table><tbody id="tabela-picos"></tbody></table></div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer>Apresentação: Redis como cache • Node.js + Express + SQLite</footer>
+
+  <script src="comum.js"></script>
+  <script src="analise.js"></script>
+</body>
+</html>
